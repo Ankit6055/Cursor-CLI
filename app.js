@@ -39,17 +39,70 @@ OUTPUT: Hey, The weather of Patiala is 32 Degree C which is quite Hot.
 
 Output Example: 
 {"role": "user", "content": "what is the weather of Patiala?"}
-{"role": "think", "content": "The user is asking for the weather of patiala."}
-{"role": "think", "content": "From the available tools, I must call getWeatherInfo Tool for patiala as input."}
-{"role": "action", "tool": "getWeatherInfo", "input: "Patiala"}
-{"role": "observe", "content": "32 Degree C"}
-{"role": "think", "content": " The output of getWeatherInfo for patiala is 32 Degree C"}
-{"role": "output", "content": "Hey, The weather of Patiala is 32 Degree C which is quite Hot."}
+{"step": "think", "content": "The user is asking for the weather of patiala."}
+{"step": "think", "content": "From the available tools, I must call getWeatherInfo Tool for patiala as input."}
+{"step": "action", "tool": "getWeatherInfo", "input: "Patiala"}
+{"step": "observe", "content": "32 Degree C"}
+{"step": "think", "content": " The output of getWeatherInfo for patiala is 32 Degree C"}
+{"step": "output", "content": "Hey, The weather of Patiala is 32 Degree C which is quite Hot."}
 
 Output Format: 
 {"step": "string", "tool": "string", "input": "string", "content": "string"}
 
 `;
+
+function getWeatherInfo(cityName) {
+  return `${cityName} has 43 Degree C`;
+}
+
+const TOOLS_MAP = {
+  getWeatherInfo,
+};
+
+const messages = [
+  {
+    role: "system",
+    content: SYSTEM_PROMPT,
+  },
+];
+const userQuery = "";
+
+while (true) {
+  const response = await openai.chat.completions.create({
+    model: "gemini-2.5-flash",
+    response_format: { type: "json_object" },
+    messages: messages,
+  });
+
+  messages.push({
+    role: "assistant",
+    content: response.choices[0].message.content,
+  });
+  const parsed_response = JSON.parse(response.choices[0].message.content);
+
+  if ((parsed_response.step == parsed_response.step) == "think") {
+    console.log(`${parsed_response.content}`);
+    continue;
+  }
+  if ((parsed_response.step == parsed_response.step) == "output") {
+    console.log(`${parsed_response.content}`);
+    continue;
+  }
+  if ((parsed_response.step == parsed_response.step) == "action") {
+    const tool = parsed_response.tool;
+    const input = parsed_response.input;
+
+    console.log(`🔨: Tool Call ${tool}: (${input})`);
+    TOOLS_MAP[tool](input);
+
+    messages.push({
+      role: "assistant",
+      content: JSON.stringify({ step: "observe", content: value }),
+    });
+
+    continue;
+  }
+}
 
 const response = await openai.chat.completions.create({
   model: "gemini-2.5-flash",
@@ -58,36 +111,6 @@ const response = await openai.chat.completions.create({
     {
       role: "system",
       content: SYSTEM_PROMPT,
-    },
-    {
-      role: "user",
-      content: `{"step": "start", "content": "what is weather of Delhi?"}`,
-    },
-    {
-      role: "user",
-      content: `{"step": "think", "content": "The user is asking for the weather of Delhi."}`,
-    },
-    {
-      role: "user",
-      content: `{"step": "action", "tool": "getWeatherInfo", "input": "Delhi"}`,
-    },
-    {
-      role: "user",
-      content: `{"step": "observe", "content": "28 Degree C"}`,
-    },
-    {
-      role: "user",
-      content: `{
-       "step": "think",
-       "content": "The output of getWeatherInfo for Delhi is 28 Degree C"
-       `
-    },
-    {
-      role: "user",
-      content: `{
-      "step": "output",
-      "content": "Hey, The weather of Delhi is 28 Degree C."
-      `
     },
   ],
 });
